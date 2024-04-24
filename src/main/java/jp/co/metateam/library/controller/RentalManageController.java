@@ -20,6 +20,11 @@ import lombok.extern.log4j.Log4j2;
 import jp.co.metateam.library.model.RentalManage;
 import jp.co.metateam.library.model.RentalManageDto;
 import jp.co.metateam.library.values.RentalStatus;
+import jp.co.metateam.library.model.Stock;
+import jp.co.metateam.library.model.StockDto;
+import jp.co.metateam.library.model.Account;
+import jp.co.metateam.library.model.AccountDto;
+
 
 /**
  * 貸出管理関連クラスß
@@ -65,9 +70,13 @@ public class RentalManageController {
 
     @GetMapping("/rental/add")
     public String add(Model model) {
-        List<RentalManage> rentalManageList = this.rentalManageService.findAll();
+        
+        List <Stock> stockList = this.stockService.findAll();
+        List<Account> accounts = this.accountService.findAll();
 
-        model.addAttribute("rentalManageList", rentalManageList);
+        model.addAttribute("accounts", accounts);
+        model.addAttribute("stockList", stockList);
+        
         model.addAttribute("rentalStatus", RentalStatus.values());
 
         if (!model.containsAttribute("rentalManageDto")) {
