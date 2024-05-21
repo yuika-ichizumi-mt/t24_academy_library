@@ -200,16 +200,16 @@ public class RentalManageController {
                
             }
             // 貸出可否チェック(リポジトリ→サービスでチェック→その結果をここで呼び出す)
-            String stockID = rentalManageDto.getStockId();
-            Long ID = rentalManage.getId();
+            String stockId = rentalManageDto.getStockId();
+        
             Integer status = rentalManageDto.getStatus();
             Date expectedReturnOn = rentalManageDto.getExpectedReturnOn();
             Date expectedRentalOn = rentalManageDto.getExpectedRentalOn();
 
             if (status == 0 || status == 1) {// ステータスが０と１のとき貸出可否チェック
-                Long stockcount = this.rentalManageService.countByStockIdAndStatusIn(stockID);
+                Long stockcount = this.rentalManageService.countByStockIdAndStatusInAndIdNot(stockId,Long.parseLong(id));
                 if (!(stockcount == 0)) {// 予約件数が０件だったら更新処理へGO 一件でもあればIfへ
-                    Long rentalcount = this.rentalManageService.countByStockIdAndStatusAndIdNotAndTermsIn(stockID, ID,
+                    Long rentalcount = this.rentalManageService.countByStockIdAndStatusAndIdNotAndTermsIn(stockId, Long.parseLong(id),
                             expectedReturnOn, expectedRentalOn);
 
                     if (!(stockcount == rentalcount)) {// 同じ本を貸出待ちor貸出中の人 と 借りたい期間が被っていない人の一緒じゃなかったら
