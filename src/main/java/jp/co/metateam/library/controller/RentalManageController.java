@@ -90,26 +90,21 @@ public class RentalManageController {
     public String save(@Valid @ModelAttribute RentalManageDto rentalManageDto, BindingResult result,
             RedirectAttributes ra) {
         try {
-
             String stockID = rentalManageDto.getStockId();
-
             Integer status = rentalManageDto.getStatus();
             Date expectedReturnOn = rentalManageDto.getExpectedReturnOn();
             Date expectedRentalOn = rentalManageDto.getExpectedRentalOn();
 
-            if (status == 0 || status == 1) {// ステータスが０と１のとき貸出可否チェック
-                Long stockcount = this.rentalManageService.countByStockIdAndStatusIn(stockID);
-                if (!(stockcount == 0)) {// 予約件数が０件だったら更新処理へGO 一件でもあればIfへ
-                    Long rentalcount = this.rentalManageService.countByStockIdAndStatusAndTermsIn(stockID,
-                            expectedReturnOn, expectedRentalOn);
+            Long stockcount = this.rentalManageService.countByStockIdAndStatusIn(stockID);
+            Long rentalcount = this.rentalManageService.countByStockIdAndStatusAndTermsIn(stockID,
+                    expectedReturnOn, expectedRentalOn);
 
-                    if (!(stockcount == rentalcount)) {// 同じ本を貸出待ちor貸出中の人 と 借りたい期間が被っていない人の一緒じゃなかったら
-                        String rentaladdError = "この期間は貸出できません。";
-                        result.addError(new FieldError("rentalmanageDto", "expectedRentalOn", rentaladdError));
-                        result.addError(new FieldError("rentalmanageDto", "expectedReturnOn", rentaladdError));
-                    }
-                }
+            if (!(stockcount == rentalcount)) {// 同じ本を貸出待ちor貸出中の人 と 借りたい期間が被っていない人の一緒じゃなかったら
+                String rentaladdError = "この期間は貸出できません。";
+                result.addError(new FieldError("rentalmanageDto", "expectedRentalOn", rentaladdError));
+                result.addError(new FieldError("rentalmanageDto", "expectedReturnOn", rentaladdError));
             }
+
             if (result.hasErrors()) {
                 throw new Exception("Validation error.");
             }
@@ -174,59 +169,51 @@ public class RentalManageController {
     @PostMapping("/rental/{id}/edit")
     public String update(@PathVariable("id") String id, @Valid @ModelAttribute RentalManageDto rentalManageDto,
             BindingResult result, Model model) {
-        
-       
-
-        
-
-        
 
         // 変更後の貸出予定日の取得
         Date afterexpectedRentalOn = rentalManageDto.getExpectedRentalOn();
-        
 
         try { // ifをまとめる箱
             RentalManage rentalManage = this.rentalManageService.findById(Long.valueOf(id));
-            
+
             // Long.valueOf(id) = 文字列からLong型への変換
             String validerror = rentalManageService.isStatusError(rentalManage.getStatus(), rentalManageDto.getStatus(),
-                    afterexpectedRentalOn.toInstant().atZone(ZoneId.systemDefault()).toLocalDate(), LocalDate.now()); 
+                    afterexpectedRentalOn.toInstant().atZone(ZoneId.systemDefault()).toLocalDate(), LocalDate.now());
 
-            
             if (validerror != null) { // nullじゃなかった時
                 result.addError(new FieldError("rentalManageDto", "status", validerror));
                 // 入力された情報が引っかかる場合result にエラー情報を追加
                 // 具体的には、FieldError オブジェクトを作成し、その中にエラーの詳細情報を設定
-               
+
             }
             // 貸出可否チェック(リポジトリ→サービスでチェック→その結果をここで呼び出す)
             String stockId = rentalManageDto.getStockId();
-        
+
             Integer status = rentalManageDto.getStatus();
             Date expectedReturnOn = rentalManageDto.getExpectedReturnOn();
             Date expectedRentalOn = rentalManageDto.getExpectedRentalOn();
 
             if (status == 0 || status == 1) {// ステータスが０と１のとき貸出可否チェック
-                Long stockcount = this.rentalManageService.countByStockIdAndStatusInAndIdNot(stockId,Long.parseLong(id));
-                if (!(stockcount == 0)) {// 予約件数が０件だったら更新処理へGO 一件でもあればIfへ
-                    Long rentalcount = this.rentalManageService.countByStockIdAndStatusAndIdNotAndTermsIn(stockId, Long.parseLong(id),
-                            expectedReturnOn, expectedRentalOn);
+                Long stockcount = this.rentalManageService.countByStockIdAndStatusInAndIdNot(stockId,
+                        Long.parseLong(id));
 
-                    if (!(stockcount == rentalcount)) {// 同じ本を貸出待ちor貸出中の人 と 借りたい期間が被っていない人の一緒じゃなかったら
-                        String rentaladdError = "この期間は貸出できません。";
-                        result.addError(new FieldError("rentalmanageDto", "expectedRentalOn", rentaladdError));
-                        result.addError(new FieldError("rentalmanageDto", "expectedReturnOn", rentaladdError));
-                    }
+                Long rentalcount = this.rentalManageService.countByStockIdAndStatusAndIdNotAndTermsIn(stockId,
+                        Long.parseLong(id),
+                        expectedReturnOn, expectedRentalOn);
+
+                if (!(stockcount == rentalcount)) {// 同じ本を貸出待ちor貸出中の人 と 借りたい期間が被っていない人の一緒じゃなかったら
+                    String rentaladdError = "この期間は貸出できません。";
+                    result.addError(new FieldError("rentalmanageDto", "expectedRentalOn", rentaladdError));
+                    result.addError(new FieldError("rentalmanageDto", "expectedReturnOn", rentaladdError));
                 }
             }
-           
 
             if (result.hasErrors()) { //
                 throw new Exception("Validation error.");
                 // 例外処理を行っている これが無いとプログラムエラーが出た時に処理が止まってしまう
             }
             // 更新処理
-            
+
             this.rentalManageService.update(Long.valueOf(id), rentalManageDto);
 
             return "redirect:/rental/index"; // リダイレクトの時新しいURLを作る;
@@ -234,8 +221,8 @@ public class RentalManageController {
 
         } catch (Exception e) { // tryで何かがバリデーションに引っかかったらcatch（ e 例外を表す変数）
             log.error(e.getMessage()); // プログラムの中で問題が発生したときに例外のエラーメッセージをエラーレベルのログに記録して問題を追跡
-            List<Stock> stockList = this.stockService.findStockAvailableAll(); 
-                                                                               // 条件に合うものをすべて取得
+            List<Stock> stockList = this.stockService.findStockAvailableAll();
+            // 条件に合うものをすべて取得
 
             List<Account> accounts = this.accountService.findAll(); // 社員番号のプルダウンリスト作成
             // this 同じクラスの中にある箱を持ってくる
