@@ -205,7 +205,7 @@ public class StockService {
     }
 
     //遷移後
-    public List<Stock> availableStockValues(java.sql.Date choiceDate, Integer title) {
+    public List<Stock> availableStockValues(java.util.Date choiceDate, Integer title) {
 
         //書籍IDを取得
         Long id = Long.valueOf(title + 1);  //titleは書籍ID　ⅮBeaverが0からスタートしているから

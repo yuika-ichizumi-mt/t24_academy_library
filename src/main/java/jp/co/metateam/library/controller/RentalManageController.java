@@ -99,12 +99,12 @@ public class RentalManageController {
             model.addAttribute("rentalStatus", RentalStatus.values());
  
         } else {
-            return "rental/add";
  
-            //model.addAttribute("accounts", accounts);
-           // model.addAttribute("stockList", stockList);
-            //model.addAttribute("rentalStatus", RentalStatus.values());
- 
+            
+            model.addAttribute("accounts", accounts);
+            model.addAttribute("rentalStatus", RentalStatus.values());
+            // 貸出予定日と在庫管理番号のプルダウン表示
+            model.addAttribute("stockList", stockList);
         }
  
         if (!model.containsAttribute("rentalManageDto")) {
