@@ -5,6 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.validation.BindingResult;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Date;
 
 import jakarta.validation.Valid;
@@ -68,21 +70,49 @@ public class RentalManageController {
         return "rental/index";
     }
 
-    @GetMapping("/rental/add")
-    public String add(Model model) {
-
-        List<Stock> stockList = this.stockService.findStockAvailableAll();
+ @GetMapping("/rental/add")
+    public String add(Model model, @ModelAttribute RentalManageDto rentalManageDto,
+            @RequestParam(value = "year", required = false) Integer year,
+            @RequestParam(value = "month", required = false) Integer month,
+            @RequestParam(value = "day", required = false) Integer day,
+            @RequestParam(value = "title", required = false) Integer title) {
         List<Account> accounts = this.accountService.findAll();
-
-        model.addAttribute("accounts", accounts);
-        model.addAttribute("stockList", stockList);
-
-        model.addAttribute("rentalStatus", RentalStatus.values());
-
-        if (!model.containsAttribute("rentalManageDto")) {
-            model.addAttribute("rentalManageDto", new RentalManageDto());
+        List<Stock> stockList = this.stockService.findStockAvailableAll();
+ 
+        if (year != null && month != null && day != null && title != null) {
+            LocalDate localDate = LocalDate.of(year, month, day);
+            java.sql.Date choiceDate = java.sql.Date.valueOf(localDate);  //importを変換している
+            List<Stock> availableStock = this.stockService.availableStockValues(choiceDate, title);
+            model.addAttribute("stockList", availableStock);
+ 
+           //遷移後の画面    
+            rentalManageDto.setId(null);
+            rentalManageDto.setEmployeeId(null);
+            rentalManageDto.setExpectedRentalOn(null);
+            rentalManageDto.setExpectedReturnOn(null);
+            rentalManageDto.setStockId(null);
+            rentalManageDto.setStatus(null);
+            rentalManageDto.setExpectedRentalOn(choiceDate); //選択した貸出予定日が表示される
+ 
+            model.addAttribute("rentalManageDto", rentalManageDto);
+            model.addAttribute("accounts", accounts);
+            model.addAttribute("rentalStatus", RentalStatus.values());
+ 
+        } else {
+            return "rental/add";
+ 
+            //model.addAttribute("accounts", accounts);
+           // model.addAttribute("stockList", stockList);
+            //model.addAttribute("rentalStatus", RentalStatus.values());
+ 
         }
-
+ 
+        if (!model.containsAttribute("rentalManageDto")) {
+ 
+            model.addAttribute("rentalManageDto", new RentalManageDto());
+ 
+        }
+ 
         return "rental/add";
     }
 
