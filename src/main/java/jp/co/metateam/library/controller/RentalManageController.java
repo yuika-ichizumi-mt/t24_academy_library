@@ -81,7 +81,8 @@ public class RentalManageController {
  
         if (year != null && month != null && day != null && title != null) {
             LocalDate localDate = LocalDate.of(year, month, day);
-            Date choiceDate = Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());  //importを変換している
+            Date choiceDate = Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());  //importを変換している為localDateからDateに変更した
+
             List<Stock> availableStock = this.stockService.availableStockValues(choiceDate, title);
             model.addAttribute("stockList", availableStock);
  
