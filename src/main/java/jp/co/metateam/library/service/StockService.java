@@ -4,11 +4,13 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 import jp.co.metateam.library.model.BookMstDto;
+import jp.co.metateam.library.model.CalendarDto;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ import jp.co.metateam.library.model.BookMst;
 import jp.co.metateam.library.model.RentalManage;
 import jp.co.metateam.library.model.Stock;
 import jp.co.metateam.library.model.StockDto;
+import jp.co.metateam.library.model.StockListDto;
 import jp.co.metateam.library.repository.BookMstRepository;
 import jp.co.metateam.library.repository.StockRepository;
 import jp.co.metateam.library.repository.RentalManageRepository;
@@ -147,71 +150,92 @@ public class StockService {
         return daysOfWeek;
     }
 
-    public List<List<String>> generateValues(Integer year, Integer month, Integer daysInMonth) {
-        List<List<String>> bigValues = new ArrayList<>();
-        List<BookMst> bookData = findAllBookData(); // transactionalでは呼びだしただけだからここでも呼び出す必要がある
-
-        // 書籍分ループ（：拡張ループ）
+    public List<CalendarDto> generateValue(Integer year, Integer month, Integer daysInMonth) {
+        List<CalendarDto> calendarDtos = new ArrayList<CalendarDto>();
+ 
+        // BookMstテーブルのすべての書籍情報をリストに追加
+        List<BookMst> bookData = findAllBookData();
+ 
+        // 書籍分ループ
         for (BookMst bookLoop : bookData) {
-            //書籍名、利用可能在庫数、日毎の利用可能在庫数
-            List<String> values = new ArrayList<>();
-            values.add(bookLoop.getTitle()); // 日毎の利用可能在庫数もカウント出来ている
-
-            // 利用可能総在庫数
-            List<Stock> availableList = findAllAvailableStockData(bookLoop.getId());
+            CalendarDto calendarDto = new CalendarDto();
+            // valuesという箱にループしてきたtitleを詰める
+            calendarDto.setTitle(bookLoop.getTitle());
+ 
+            calendarDto.setId(bookLoop.getId());
+ 
+            // 総利用可能在庫数
+            List<Stock> availableStocks = findAllAvailableStockData(bookLoop.getId());
             // 数字を文字列に変換
-            String availableStocksCount = String.valueOf(availableList.size());
-            values.add(availableStocksCount);
-
+            String availableStocksCount = String.valueOf(availableStocks.size());
+            // カウントしたものをvaluesに追加
+            calendarDto.setAvailableStockCount(availableStocksCount);
+ 
+            List<StockListDto> stockList = new ArrayList<StockListDto>();
+ 
             List<String> stockIdList = new ArrayList<>();
-            for (Stock stock : availableList) {
+            for (Stock stock : availableStocks) {
                 // stockIdって箱にループしてきたIdをつめてる
                 stockIdList.add(stock.getId());
-
             }
-
-             //現在日付を取得
-             LocalDate today = LocalDate.now();
-
+ 
+ 
+            // 現在日付の取得
+            LocalDate today = LocalDate.now();
+           
             // 日付分ループ
-            for (int dayOfMonth = 1; dayOfMonth <= daysInMonth; dayOfMonth++) { 
+            for (int dayOfMonth = 1; dayOfMonth <= daysInMonth; dayOfMonth++) {
+                StockListDto stockListDto = new StockListDto();
+                 //日付の作成
+                 LocalDate currentDateOfMonth = LocalDate.of(year, month, dayOfMonth);
+ 
+                 stockListDto.setExpectedRentalOn(currentDateOfMonth);
+                 // 過去日だった場合×を表示
+                 if (today != null && currentDateOfMonth.isBefore(today)) {
+                     stockListDto.setStockcount("×");
+                    //×の値を追加する行
+                     stockList.add(stockListDto);
+                     continue; // 次の日付へ
+                 }
+                // 対象の日付を取得
                 LocalDate localDate = LocalDate.of(year, month, dayOfMonth);
                 // LocalDate型のlocalDateををDate型に変換しdateに入れる
                 Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
                 // 日ごとの利用可能在庫数
                 Long scheduledRentaWaitDataCount = scheduledRentaWaitData(date, stockIdList);
                 Long scheduledRentalingDataCount = scheduledRentalingData(date, stockIdList);
-
-                Long total = availableList.size() - (scheduledRentaWaitDataCount + scheduledRentalingDataCount);
-
+ 
+                Long total = availableStocks.size() - (scheduledRentaWaitDataCount + scheduledRentalingDataCount);
                 // 計算してtotalに入れたデータを String型のtotalValueに変換
                 String totalValue = (total <= 0) ? "×" :Long.toString(total);
-
-                values.add(totalValue);
                
-                // List<Stock> availabStock = findAllAvailableStockData(null);
-                LocalDate currentDateOfMonth = LocalDate.of(year, month, dayOfMonth);
-                // 過去日の判定
-                if (today != null && currentDateOfMonth.isBefore(today)) {
-                    values.add("×");
-                    continue; // 次の日付へ
-                }
-                
+                stockListDto.setStockcount(totalValue);
+                //×の値を追加する行
+                 stockList.add(stockListDto);
+               
             }
-
-            bigValues.add(values);
+            calendarDto.setStockList(stockList);
+            calendarDtos.add(calendarDto);
         }
-        return bigValues;
+ 
+        return calendarDtos;
     }
+                
+            
+
+           
+        
+       
+    
 
     //遷移後
-    public List<Stock> availableStockValues(Date choiceDate, Integer title) {
+    public List<Stock> availableStockValues(java.sql.Date choiceDate, Long title) {
 
         //書籍IDを取得
-        Long id = Long.valueOf(title + 1);  //titleは書籍ID　ⅮBeaverが0からスタートしているから
+        //Long id = Long.valueOf(title + 1);  //titleは書籍ID　ⅮBeaverが0からスタートしているから
 
-        List<Stock> availableList = lendableBook(choiceDate,id);
-        List<Stock> StockAvailable = this.stockRepository.bookStockAvailable(id);
+        List<Stock> availableList = lendableBook(choiceDate,title);
+        List<Stock> StockAvailable = this.stockRepository.bookStockAvailable(title);
 
         StockAvailable.removeAll(availableList); //removeAllによって表示できる在庫管理番号を厳選
 
