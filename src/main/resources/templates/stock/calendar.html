@@ -36,18 +36,29 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="stock, stat : ${stocks}">
-                                        <th:block th:each="bookData, iterStat : ${stock}">
-                                            <td th:if="${iterStat.index >= 2 and #dates.format(#dates.create(targetYear, targetMonth, iterStat.index -1), 'yyyy-MM-dd') >= #temporals.format(nowDate, 'yyyy-MM-dd') and bookData != '×'}"> <!--0.1には書籍名と総在庫数が入っているから２以下はリンクにしない・２から始まっているから、マイナス１をして日付が１からスタートするようにする-->
-                                                <a th:href="@{/rental/add(year=${targetYear}, month=${targetMonth}, day=${iterStat.index-1}, title=${stat.index})}">
-                                                    <span th:text="${bookData}"></span>
-                                                </a>
-                                            </td>
-                                            <td th:unless="${iterStat.index >= 2 and #dates.format(#dates.create(targetYear, targetMonth, iterStat.index-1), 'yyyy-MM-dd') >= #temporals.format(nowDate, 'yyyy-MM-dd') and bookData != '×'}">
-                                                <span th:text="${bookData}"></span>
-                                            </td>
-                                        </th:block>
-                                    </tr>
+                            <tr th:each="stock:${stocks}">
+                                <td th:text ="${stock.title}"></td>
+                                <td th:text ="${stock.availableStockCount}"></td>
+                                <td th:each ="stockLists : ${stock.stockList}">
+                                    <span th:text="${stockLists.stockcount}" th:if="${stockLists.stockcount =='×'}"></span>
+                                    <a th:href="@{/rental/add(day=${stockLists.expectedRentalOn}, title=${stock.id})}" th:if="${stockLists.stockcount !='×'}">
+                                        <span th:text="${stockLists.stockcount}"></span>
+                                    </a>
+                                </td>
+                            </tr>
+
+                            <!-- <tr th:each="stock, stat : ${stocks}">
+                                <th:block th:each="bookData, iterStat : ${stock}">
+                                    <td th:if="${iterStat.index >= 2 and #dates.format(#dates.create(targetYear, targetMonth, iterStat.index -1), 'yyyy-MM-dd') >= #temporals.format(nowDate, 'yyyy-MM-dd') and bookData != '×'}"> 0.1には書籍名と総在庫数が入っているから２以下はリンクにしない・２から始まっているから、マイナス１をして日付が１からスタートするようにする>
+                                        <a th:href="@{/rental/add(year=${targetYear}, month=${targetMonth}, day=${iterStat.index-1}, title=${stat.index})}">
+                                            <span th:text="${bookData}"></span>
+                                        </a>
+                                    </td>
+                                    <td th:unless="${iterStat.index >= 2 and #dates.format(#dates.create(targetYear, targetMonth, iterStat.index-1), 'yyyy-MM-dd') >= #temporals.format(nowDate, 'yyyy-MM-dd') and bookData != '×'}">
+                                        <span th:text="${bookData}"></span>
+                                    </td>
+                                </th:block>
+                            </tr> -->
                         </tbody>
                     </table>
                 </div>
