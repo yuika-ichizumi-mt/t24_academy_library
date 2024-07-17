@@ -158,8 +158,8 @@ public class StockService {
     public List<CalendarDto> generateValue(Integer year, Integer month, Integer daysInMonth, String searchTitle) {
         List<CalendarDto> calendarDtos = new ArrayList<CalendarDto>();
 
-        // BookMstテーブルのすべての書籍情報をリストに追加
-        // List<BookMst> bookData = findAllBookData();
+        
+        
 
         // 検索機能
         List<BookMst> bookData = new ArrayList<>();
@@ -237,8 +237,7 @@ public class StockService {
     // 遷移後
     public List<Stock> availableStockValues(java.sql.Date choiceDate, Long title) {
 
-        // 書籍IDを取得
-        // Long id = Long.valueOf(title + 1); //titleは書籍ID ⅮBeaverが0からスタートしているから
+        
 
         List<Stock> availableList = lendableBook(choiceDate, title);
         List<Stock> StockAvailable = this.stockRepository.bookStockAvailable(title);
