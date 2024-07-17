@@ -13,7 +13,7 @@
             <div class="inner_contens">
                 <div class="page_title">在庫カレンダー
                  <form class="searchBox" action="/mt_library/stock/calendar" method="get"> 
-                     <input type="text"name="searchTitle"value=""placeholder="キーワード">
+                     <input type="text"name="searchTitle"value=""placeholder="検索">
                     <button type="submit">検索</button>
                 </form> 
                 <div class="searchCount" th:text="${searchTitle + '件'}"></div> 
