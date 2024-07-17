@@ -89,8 +89,13 @@ public class StockService {
     }
 
     @Transactional
-    public List<Stock> bookStockAvailable(Long id){
+    public List<Stock> bookStockAvailable(Long id) {
         return this.stockRepository.bookStockAvailable(id);
+    }
+
+    @Transactional
+    public List<BookMst> bookSearch(String searchTitle) {
+        return this.bookMstRepository.bookSearch(searchTitle);
     }
 
     @Transactional
@@ -150,53 +155,60 @@ public class StockService {
         return daysOfWeek;
     }
 
-    public List<CalendarDto> generateValue(Integer year, Integer month, Integer daysInMonth) {
+    public List<CalendarDto> generateValue(Integer year, Integer month, Integer daysInMonth, String searchTitle) {
         List<CalendarDto> calendarDtos = new ArrayList<CalendarDto>();
- 
+
         // BookMstテーブルのすべての書籍情報をリストに追加
-        List<BookMst> bookData = findAllBookData();
- 
+        // List<BookMst> bookData = findAllBookData();
+
+        // 検索機能
+        List<BookMst> bookData = new ArrayList<>();
+        if (searchTitle != null) {
+            bookData = bookSearch(searchTitle);
+        } else {
+            bookData = findAllBookData();
+        }
+
         // 書籍分ループ
         for (BookMst bookLoop : bookData) {
             CalendarDto calendarDto = new CalendarDto();
             // valuesという箱にループしてきたtitleを詰める
             calendarDto.setTitle(bookLoop.getTitle());
- 
+
             calendarDto.setId(bookLoop.getId());
- 
+
             // 総利用可能在庫数
             List<Stock> availableStocks = findAllAvailableStockData(bookLoop.getId());
             // 数字を文字列に変換
             String availableStocksCount = String.valueOf(availableStocks.size());
             // カウントしたものをvaluesに追加
             calendarDto.setAvailableStockCount(availableStocksCount);
- 
+
             List<StockListDto> stockList = new ArrayList<StockListDto>();
- 
+
             List<String> stockIdList = new ArrayList<>();
             for (Stock stock : availableStocks) {
                 // stockIdって箱にループしてきたIdをつめてる
                 stockIdList.add(stock.getId());
             }
- 
- 
+
             // 現在日付の取得
             LocalDate today = LocalDate.now();
-           
+
             // 日付分ループ
             for (int dayOfMonth = 1; dayOfMonth <= daysInMonth; dayOfMonth++) {
                 StockListDto stockListDto = new StockListDto();
-                 //日付の作成
-                 LocalDate currentDateOfMonth = LocalDate.of(year, month, dayOfMonth);
- 
-                 stockListDto.setExpectedRentalOn(currentDateOfMonth);
-                 // 過去日だった場合×を表示
-                 if (today != null && currentDateOfMonth.isBefore(today)) {
-                     stockListDto.setStockcount("×");
-                    //×の値を追加する行
-                     stockList.add(stockListDto);
-                     continue; // 次の日付へ
-                 }
+                // 日付の作成
+                LocalDate currentDateOfMonth = LocalDate.of(year, month, dayOfMonth);
+
+                stockListDto.setExpectedRentalOn(currentDateOfMonth);
+                // 過去日だった場合×を表示
+                if (today != null && currentDateOfMonth.isBefore(today)) {
+                    stockListDto.setStockcount("×");
+                    // ×の値を追加する行
+                    stockList.add(stockListDto);
+                    continue; // 次の日付へ
+                }
                 // 対象の日付を取得
                 LocalDate localDate = LocalDate.of(year, month, dayOfMonth);
                 // LocalDate型のlocalDateををDate型に変換しdateに入れる
@@ -204,40 +216,34 @@ public class StockService {
                 // 日ごとの利用可能在庫数
                 Long scheduledRentaWaitDataCount = scheduledRentaWaitData(date, stockIdList);
                 Long scheduledRentalingDataCount = scheduledRentalingData(date, stockIdList);
- 
+
                 Long total = availableStocks.size() - (scheduledRentaWaitDataCount + scheduledRentalingDataCount);
                 // 計算してtotalに入れたデータを String型のtotalValueに変換
-                String totalValue = (total <= 0) ? "×" :Long.toString(total);
-               
+                String totalValue = (total <= 0) ? "×" : Long.toString(total);
+
                 stockListDto.setStockcount(totalValue);
-                //×の値を追加する行
-                 stockList.add(stockListDto);
-               
+                // ×の値を追加する行
+                stockList.add(stockListDto);
+
             }
             calendarDto.setStockList(stockList);
             calendarDtos.add(calendarDto);
+
         }
- 
+
         return calendarDtos;
     }
-                
-            
 
-           
-        
-       
-    
-
-    //遷移後
+    // 遷移後
     public List<Stock> availableStockValues(java.sql.Date choiceDate, Long title) {
 
-        //書籍IDを取得
-        //Long id = Long.valueOf(title + 1);  //titleは書籍ID　ⅮBeaverが0からスタートしているから
+        // 書籍IDを取得
+        // Long id = Long.valueOf(title + 1); //titleは書籍ID ⅮBeaverが0からスタートしているから
 
-        List<Stock> availableList = lendableBook(choiceDate,title);
+        List<Stock> availableList = lendableBook(choiceDate, title);
         List<Stock> StockAvailable = this.stockRepository.bookStockAvailable(title);
 
-        StockAvailable.removeAll(availableList); //removeAllによって表示できる在庫管理番号を厳選
+        StockAvailable.removeAll(availableList); // removeAllによって表示できる在庫管理番号を厳選
 
         return StockAvailable;
     }
