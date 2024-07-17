@@ -14,7 +14,11 @@ public interface BookMstRepository extends JpaRepository<BookMst, Long> {
 
 	Optional<BookMst> findById(BigInteger id);
 
-@Query("SELECT bm FROM BookMst bm WHERE bm.deletedAt IS NULL")
- List<BookMst> findAllBookData();
+	@Query("SELECT bm FROM BookMst bm WHERE bm.deletedAt IS NULL")
+	List<BookMst> findAllBookData();
+
+	// キーワードの一部に一致した書籍名を取得
+	@Query("SELECT bm FROM BookMst bm WHERE bm.title LIKE %:searchTitle%")
+	List<BookMst> bookSearch(String searchTitle);
 
 }

@@ -9,6 +9,17 @@
     max-width: 1200px;
     overflow: scroll;
 }
+
+.searchBox{
+    display: inline-block;
+    margin-left:20px;
+}
+
+.searchCount{
+    display: inline-block; 
+    margin-left:50px;
+}
+
 #calendar_table {
     width: 100%;
     border-collapse: collapse;
@@ -18,12 +29,12 @@
 
 #calendar_table tr th,
 #calendar_table tr td {
-    border: 1px solid #B9B9B9;
+    border: 1px solid #0e0909;
     padding: 10px;
 }
 
 #calendar_table tr th {
-    background-color: #E1E1E2;
+    background-color: #15d2d5;
     width: 100%;
 }
 
@@ -35,3 +46,4 @@
     padding: 5px;
     font-size: 14px;
 }
+
